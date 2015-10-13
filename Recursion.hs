@@ -23,10 +23,10 @@ isPrime x
 nextPrime :: Int -> Int
 -- Finds the next prime number after a given integer
 nextPrime x
-    -- Handle edge cases, and simplify core algorithm by ensuring only odd numbers get pushed in
+    -- Handle edge cases
     | x <= 1    = 2
-    | even x    = nextPrime' (x + 1)
-    | otherwise = nextPrime' (x + 2)
+    -- Add 2 if odd, 1 if even; allows to skip all even numbers as they are definitely not prime
+    | otherwise = nextPrime' (x + 1 + x `mod` 2)
     -- Scans through the odd numbers looking for a prime number using the isPrime function
     -- Returns the first one it finds
     where nextPrime' :: Int -> Int
@@ -85,5 +85,11 @@ sumAllDigits :: [ Int ] -> Int
 sumAllDigits x = sum $ map sumDigits x
 
 
+isSmith :: Int -> Bool
+isSmith x = sumDigits x == (sumAllDigits $ primeFactors x)
+
+
 nextSmithNumber :: Int -> Int
-nextSmithNumber = error "TODO: implement nextSmithNumber"
+nextSmithNumber x
+    | (not $ isPrime (x + 1)) && isSmith (x + 1) = x + 1
+    | otherwise = nextSmithNumber (x + 1)
