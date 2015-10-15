@@ -61,19 +61,21 @@ isCarmichael x
 primeFactors :: Int -> [ Int ]
 -- Pre: x >= 1
 -- Returns a list of the prime factors for x
--- nextTest: Small optimisation. Checks (y + 1) next for even numbers (2),
---   checks y + 2 next for odd numbers (3, 5, ..). Avoids redundant odd checks
+-- Interesting list hack (see primeCandidates) saves about 0.4 seconds per
+--   large operation (>10m) as compared to methods e.x. "y1+1+y%2" or guard
+--   for y == 2
+-- This difference is significantly noticeable for smith numbers so kept
+--   despite readability issue
 primeFactors x
   | isPrime x = [x]
-  | otherwise = primeFactors' x 2
+  | otherwise = primeFactors' x primeCandidates
   where
-    primeFactors' :: Int -> Int -> [ Int ]
-    primeFactors' x' y
+    primeCandidates = 2:[3,5..]
+    primeFactors' :: Int -> [ Int ] -> [ Int ]
+    primeFactors' x' all@(y:candidates)
       | x' == 1         = []
-      | x' `mod` y == 0 = y : primeFactors' (x' `div` y) y
-      | otherwise       = primeFactors' x' nextTest
-      where
-        nextTest = y + 1 + y `mod` 2
+      | x' `mod` y == 0 = y : primeFactors' (x' `div` y) all
+      | otherwise       = primeFactors' x' candidates
 
 
 splitDigits :: Int -> [Int]
