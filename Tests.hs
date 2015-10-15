@@ -13,6 +13,7 @@ isPrimeTestCases
     , 4 ==> False
     , 929 ==> True
     , 930 ==> False
+    , (2^40 - 87) ==> True
     ]
 
 nextPrimeTestCases
@@ -35,6 +36,33 @@ modPowTestCases
     , (33893, 2, 10000) ==> 5449
     , (7433893, 2, 10000) ==> 5449
     , (13481503, 11237126, 46340) ==> 6629
+    ]
+
+primeFactorsTestCases
+  = [ 33554427 ==> [3, 641, 17449]
+    , 268435451 ==> [71, 3780781]
+    , 268370000 ==> [2, 2, 2, 2, 5, 5, 5, 5, 47, 571]
+    ]
+
+splitDigitsTestCases
+  = [ 123456789 ==> [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    , 987654321 ==> [9, 8, 7, 6, 5, 4, 3, 2, 1]
+    , 543216789 ==> [5, 4, 3, 2, 1, 6, 7, 8, 9]
+    ]
+
+sumDigitsTestCases
+  = [ 123456789 ==> 45]
+
+sumAllDigitsTestCases
+  = [ [123, 456, 789] ==> 45
+    , [100, 200, 300] ==> 6
+    ]
+
+isSmithTestCases
+  = [ 4 ==> True
+    , 4937775 ==> True
+    , 22 ==> True
+    , 666 ==> True -- spooky
     ]
 
 isCarmichaelTestCases
@@ -68,6 +96,16 @@ allTestCases
                            nextPrimeTestCases
     , TestCase "modPow" (uncurry3 modPow)
                         modPowTestCases
+    , TestCase "primeFactors" primeFactors
+                              primeFactorsTestCases
+    , TestCase "splitDigits" splitDigits
+                             splitDigitsTestCases
+    , TestCase "sumDigits" sumDigits
+                           sumDigitsTestCases
+    , TestCase "sumAllDigits" sumAllDigits
+                              sumAllDigitsTestCases
+    , TestCase "isSmith" isSmith
+                         isSmithTestCases
     , TestCase "isCarmichael" isCarmichael
                               isCarmichaelTestCases
     , TestCase "nextSmithNumber" nextSmithNumber
