@@ -1,12 +1,14 @@
 module Recursion where
 import System.IO.Unsafe
 import Debug.Trace
+import Data.List
 import Data.Ratio
+import Data.Maybe
 import System.Random
 
-(//) :: Int -> Int -> Int
+(//) :: (Integral a) => a -> a -> a
 x // y = x `div` y
-(%%) :: Int -> Int -> Int
+(%%) :: (Integral a) => a -> a -> a
 x %% y = x `mod` y
 
 -- Precondition on all integers: they're all non-negative.
@@ -28,7 +30,7 @@ isPrime x
 
 
 nextPrime :: Int -> Int
--- Finds the next prime number after a given integer
+-- Finds the next primeccept multiple types number after a given integer
 nextPrime x
   | x <= 1  = 2   -- Allows the +2 optimisation on line +7 without any issue
   | odd x   = nextPrime' (x + 2)
@@ -40,7 +42,7 @@ nextPrime x
       | otherwise = nextPrime' (y + 2)
 
 
-modPow :: Int -> Int -> Int -> Int
+modPow :: (Integral a) => a -> a -> a -> a
 -- Pre: 1 <= m <= sqrt(maxint)
 -- Calculates x^y mod n while minimising y to 1 for all exponents so that
 --   no integer overflow occurs for x <= maxint.
@@ -85,12 +87,12 @@ primeFactors x
       | otherwise       = primeFactors' x' candidates
 
 
+
 splitDigits :: Int -> [Int]
 -- Splits x from a (multi)digit number into a list of it's constituent digits
 splitDigits x
   | x < 10  = [x]
   | otherwise = splitDigits (x // 10) ++ [x %% 10]
-
 
 sumDigits :: Int -> Int
 -- Sums the digits of x using the splitDigits function
@@ -122,14 +124,11 @@ nextSmithNumber x
 ---------------------
 --  RSA Utilities  --
 ---------------------
--- I was in labs until 6.30pm trying to get this to work on huge primes
---   but gave up and had to settle for dealing with roughly ten thousand as
---   the max starting point for p and q.
 -- It seems the euler totient takes far too long to calculate (and often
 --   overflows) for certain numbers much larger, though many work acceptably.
 -- Apologies for the few hacky functions; I didn't have enough time to
 --   consider all of the mathematics behind them in time and had to rush
---   implement most of them.
+--   implement most of them before 12pm
 
 greatestCD :: Int -> Int -> Int
 -- Calculates the greatest common denominator of two integers
@@ -139,10 +138,28 @@ greatestCD x y
   | x  > y = greatestCD (x - y) y
   | x  < y = greatestCD x (y - x)
 
-getModMultInverse :: Int -> Int -> Int
+modMultInverse :: Int -> Int -> Int
 -- Returns the modular multiplicative index of a, b
--- Used in RSA for 'd', also x in ax + by = gcd a, b for a = eulTot n, b = e
-getModMultInverse a b = 2
+-- Used in RSA for 'd', also ax = 1 mod m for a = eulTot n, m = e
+modMultInverse a m
+  | result < 0 = result + m
+  | otherwise  = result
+  where
+    (result, _, _) = extendedGCDx a m
+
+extendedGCDx :: Int -> Int -> (Int, Int, Int)
+-- Algorithm followed closely from
+--    http://rosettacode.org/wiki/Modular_inverse
+-- Extended version of the greatest common denominator function
+--   that returns a tuple of x, y, g to suit ax + by = g for g = gcd (a, b)
+extendedGCDx m1 0 = (1, 0, m1)
+extendedGCDx m1 m2
+  = (t, s - q * t, g)
+  where
+    q         = m1 // m2
+    r         = m1 %% m2
+    (s, t, g) = extendedGCDx m2 r
+
 
 uniqueIfy :: [Int] -> [Int]
 -- Pre: SORTED in ascending integer order!
@@ -151,7 +168,8 @@ uniqueIfy [] = []
 uniqueIfy (x1:x2:xs)
   | x1 == x2  = uniqueIfy (x2:xs)
   | otherwise = x1 : (uniqueIfy (x2:xs))
-uniqueIfy (x1:[]) = x1:[]
+uniqueIfy all@(x1:[]) = all
+
 
 eulTotient :: Int -> Int
 eulTotient 1 = 1
@@ -170,25 +188,29 @@ eulTotient x
       = ( 1 % 1 - 1 % f) * eulTotient' fs
 
 
--- //// HACKY MAKESHIFT CODE 
 generatePrimePair :: (Int, Int)
 -- Generate a random key pair. Used a hacky unsafe IO operation
---   because I didn't have time to figure out how to get it structured properly
+--   because I couldn't figure out how to get it structured properly
 --   to avoid doing so.
--- Seems to return the same numbers every time until you recompile.
+-- Returns the same numbers each session.
 generatePrimePair = (prime1, prime2)
   where
     prime1 = nextPrime $ unsafePerformIO getRandomPrimeCandidate
     prime2 = nextPrime $ unsafePerformIO getRandomPrimeCandidate
--- HACKY MAKESHIFT CODE ////
+
 
 getRandomPrimeCandidate :: IO Int
 -- Super hacky way to get some random numbers that nextPrime will like =D
-getRandomPrimeCandidate = getStdRandom (randomR (500, 9999))
+-- Bigger numbers works (Calculations begin to halt at ~1 million,
+--   but take a very long time. This is just for examplar and testing use,
+--   so a small number is fine.
+getRandomPrimeCandidate = getStdRandom (randomR (500, 999))
+
 
 getNpq :: (Int, Int) -> Int
 -- Super simple function to get n from p and q. Purely for readability later
 getNpq (p, q) = p * q
+
 
 getPublicKeyExponent :: Int -> Int -> Int
 -- Gets the public key exponent (e) between min and totient of n (see getNpq)
@@ -202,12 +224,86 @@ getPublicKeyExponent min eulTotN
   | otherwise        = getPublicKeyExponent (min + 1) eulTotN
   where commonDenom  = greatestCD min eulTotN
 
-rsaEncrypt :: Int -> Int -> Int -> Int
--- Given data, e and public key, will encrypt data using RSA
-rsaEncrypt dat e pub
-  = modPow dat e pub
 
-rsaDecrypt :: Int -> Int -> Int -> Int
--- Given data, d and private key, will decrypt a number with RSA
-rsaDecrypt dat d pri
-  = modPow dat d pri
+rsaEncrypt :: Integer -> Int -> Int -> Integer
+-- Given data, e and n, will encrypt data using RSA
+rsaEncrypt dat e n
+  = modPow dat (toInteger e) (toInteger n)
+
+
+rsaDecrypt :: Integer -> Int -> Int -> Integer
+-- Given data, d and n, will decrypt a number with RSA
+rsaDecrypt dat d n
+  = modPow dat (toInteger d) (toInteger n)
+
+
+-- 2 is a safe number to start from for the public key exponent
+basicEulN
+  = eulTotient (getNpq generatePrimePair)
+basicPublicKeyExp
+  = getPublicKeyExponent 2 basicEulN
+basicPrivateKeyExp
+  = modMultInverse  basicPublicKeyExp basicEulN
+
+rsaEncryptBasic :: Integer -> Integer
+-- Encrypts data using the generated RSA key
+rsaEncryptBasic dat
+  = rsaEncrypt dat basicPublicKeyExp n
+  where
+    n = getNpq generatePrimePair
+    
+
+rsaDecryptBasic :: Integer -> Integer
+-- Decrypts data using the generated RSA key
+rsaDecryptBasic dat
+  = rsaDecrypt dat basicPrivateKeyExp n
+  where
+    n = getNpq generatePrimePair
+    d = modMultInverse en (getPublicKeyExponent 2 en)
+    en = eulTotient n
+
+
+
+
+cipherCharacters
+  = (['0'..'9'] ++ ['a'..'z'] ++ ['A'..'Z'] ++ " !\"£$%^&*()_+-=:")
+
+basicCipherChar :: Char -> Int
+-- Ciphers a character using the basic cipher above
+-- Pre: c is contained in the cipher and isn't 
+basicCipherChar c
+  = (fromMaybe 0 (elemIndex c cipherCharacters)) + 10
+
+
+basicDecipherChar :: Int -> Char
+-- Undoes a cipher previously done
+-- Pre: i is a ciphered character and hence is within the bounds of the list
+basicDecipherChar i
+  = cipherCharacters !! (i - 10)
+
+
+basicCipherString :: String -> Integer
+-- Ciphers an entire string of length n into an integer of 'length' 2n
+-- Pre: Every character is a valid alphabetic character
+basicCipherString str
+  = basicCipherString' str 0
+  where
+    basicCipherString' :: String -> Integer -> Integer
+    basicCipherString' [] ci      = ci
+    basicCipherString' (x:xs) ci  = basicCipherString' xs (hund + ciphered)
+      where
+        ciphered = toInteger (basicCipherChar x)
+        hund = ci * 100
+
+
+basicDecipherString :: Integer -> String
+-- Deciphers an entire integer of length 2n to a string of length n
+-- Pre: Ciphered, so assumed constraints on digit values
+basicDecipherString x
+  = map basicDecipherChar pairs
+  where
+    pairs = splitPairs x
+    splitPairs :: Integer -> [Int]
+    splitPairs x
+      | x < 100 = [fromIntegral(x)]
+      | otherwise = splitPairs (x // 100) ++ [fromIntegral(x %% 100)]
