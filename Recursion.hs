@@ -204,7 +204,7 @@ getRandomPrimeCandidate :: IO Int
 -- Bigger numbers works (Calculations begin to halt at ~1 million,
 --   but take a very long time. This is just for examplar and testing use,
 --   so a small number is fine.
-getRandomPrimeCandidate = getStdRandom (randomR (500, 999))
+getRandomPrimeCandidate = getStdRandom (randomR (1000, 9999))
 
 
 getNpq :: (Int, Int) -> Int
@@ -218,7 +218,6 @@ getPublicKeyExponent :: Int -> Int -> Int
 -- Low e are apparently somewhat less secure in some settings but should
 --   be acceptable
 getPublicKeyExponent min eulTotN
-  | trace ("GPKE I " ++ show min) False   = 0
   | min == eulTotN   = error "Too big a minimum for public key exponent"
   | commonDenom == 1 = min
   | otherwise        = getPublicKeyExponent (min + 1) eulTotN
@@ -306,4 +305,48 @@ basicDecipherString x
     splitPairs :: Integer -> [Int]
     splitPairs x
       | x < 100 = [fromIntegral(x)]
-      | otherwise = splitPairs (x // 100) ++ [fromIntegral(x %% 100)]
+      | otherwise = splitPairs (x // 100) ++ [fromIntegral (x %% 100)]
+
+basicRSADoString :: String -> [Integer]
+-- Takes a string, ciphers it, splits it into integers 6 digits long for
+--   RSA to be safely not lossy on the minimum basic n bitsize, and then
+--   encrypts each of them.
+basicRSADoString str
+  = map rsaEncryptBasic (splitSixes $ basicCipherString str)
+  where
+    splitSixes :: Integer -> [Integer]
+    splitSixes x
+      | x < 100000 = [x]
+      | otherwise = splitSixes (x // 100000) ++ [x %% 100000]
+
+
+basicRSAUndoString :: [Integer] -> String
+-- Takes a list of integers encrypted by basic RSA, decrypts them,
+--   merges them and then feeds them into the deciphering function
+basicRSAUndoString encrypted
+  = basicDecipherString $ mergeNumbers (map rsaDecryptBasic encrypted)
+
+
+mergeNumbers :: [Integer] -> Integer
+mergeNumbers x
+  = mergeNumbers' x 0
+  where
+    mergeNumbers' :: [Integer] -> Integer -> Integer
+    mergeNumbers' []     pro = pro
+    mergeNumbers' (x:xs) pro
+      = mergeNumbers' xs (pro * (10 ^ magn ) + x)
+        where magn = floor ( logBase 10 (fromIntegral(x) ) ) + 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
