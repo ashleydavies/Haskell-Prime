@@ -340,15 +340,3 @@ mergeNumbers x
         where magn = floor ( logBase 10 (fromIntegral(x) ) ) + 1
 
 
-
-
-
-
-
-
-
-
-
-
-
-
