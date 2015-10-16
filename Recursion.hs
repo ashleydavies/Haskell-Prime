@@ -6,10 +6,12 @@ import Data.Ratio
 import Data.Maybe
 import System.Random
 
+-- Convenient operators to make code more readable
 (//) :: (Integral a) => a -> a -> a
 x // y = x `div` y
 (%%) :: (Integral a) => a -> a -> a
 x %% y = x `mod` y
+
 
 -- Precondition on all integers: they're all non-negative.
 
