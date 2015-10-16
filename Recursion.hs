@@ -328,6 +328,8 @@ basicRSAUndoString encrypted
 
 
 mergeNumbers :: [Integer] -> Integer
+-- Merges arbitrary number of integers.
+-- Pre: All >= 0
 mergeNumbers x
   = mergeNumbers' x 0
   where

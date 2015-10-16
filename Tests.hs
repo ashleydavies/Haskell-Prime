@@ -88,6 +88,15 @@ nextSmithNumberTestCases
     , 4937750 ==> 4937775
     ]
 
+basicRSATestCases
+  = [ "Hello!" ==> "Hello!"
+    , "Test with a longer string"
+  ==> "Test with a longer string"
+    ]
+
+basicRSATest :: String -> String
+basicRSATest x
+  = basicRSAUndoString $ basicRSADoString x
 
 allTestCases
   = [ TestCase "isPrime" isPrime
@@ -110,6 +119,8 @@ allTestCases
                               isCarmichaelTestCases
     , TestCase "nextSmithNumber" nextSmithNumber
                                  nextSmithNumberTestCases
+    , TestCase "basicRSATest" basicRSATest
+                              basicRSATestCases
     ]
 
 runTests = mapM_ goTest allTestCases
