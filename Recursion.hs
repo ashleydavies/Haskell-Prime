@@ -1,4 +1,10 @@
 module Recursion where
+import Debug.Trace
+
+(//) :: Int -> Int -> Int
+x // y = x `div` y
+(%) :: Int -> Int -> Int
+x % y = x `mod` y
 
 -- Precondition on all integers: they're all non-negative.
 
@@ -12,7 +18,7 @@ isPrime x
     isPrime' :: Int -> Bool
     isPrime' y
       | y  > maxNum     = True
-      | x `mod` y == 0  = False
+      | x % y == 0  = False
       | otherwise       = isPrime' (y + 2)
       where
 		    maxNum = ceiling(sqrt(fromIntegral(x)))
@@ -39,9 +45,9 @@ modPow :: Int -> Int -> Int -> Int
 --   For even y, x^y mod n = (x^(y/2) mod n)^2 mod n
 --   For odd  y, x^y mod n = (x mod n)(x^(y-1) mod n) mod n
 modPow x y n
-  | y <= 1  = x^y `mod` n
-  | odd y   = ((x `mod` n) * (modPow x (y - 1) n)) `mod` n
-  | even y  = (((modPow x (y `div` 2) n) `mod` n) ^ 2) `mod` n
+  | y <= 1  = (x^y) % n
+  | odd y   = ((x % n) * (modPow x (y - 1) n)) % n
+  | even y  = (((modPow x (y // 2) n) % n) ^ 2) % n
 
 
 isCarmichael :: Int -> Bool
@@ -72,7 +78,7 @@ primeFactors x
     primeFactors' :: Int -> [ Int ] -> [ Int ]
     primeFactors' x' all@(y:candidates)
       | x' == 1         = []
-      | x' `mod` y == 0 = y : primeFactors' (x' `div` y) all
+      | x' % y == 0 = y : primeFactors' (x' // y) all
       | otherwise       = primeFactors' x' candidates
 
 
@@ -80,7 +86,7 @@ splitDigits :: Int -> [Int]
 -- Splits x from a (multi)digit number into a list of it's constituent digits
 splitDigits x
   | x < 10  = [x]
-  | otherwise = splitDigits (x `div` 10) ++ [x `mod` 10]
+  | otherwise = splitDigits (x // 10) ++ [x % 10]
 
 
 sumDigits :: Int -> Int
