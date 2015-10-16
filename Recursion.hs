@@ -15,8 +15,6 @@ isPrime x
       | x `mod` y == 0  = False
       | otherwise       = isPrime' (y + 2)
       where
-        -- sqrt x is the highest number we need to check. + Some necessary
-        --   casts
 		    maxNum = ceiling(sqrt(fromIntegral(x)))
 
 
