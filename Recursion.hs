@@ -19,7 +19,7 @@ isPrime x
     isPrime' y
       | y  > maxNum     = True
       | x % y == 0  = False
-      | otherwise       = isPrime' (y + 2)
+      | otherwise       = isPrime' (y++++)
       where
 		    maxNum = ceiling(sqrt(fromIntegral(x)))
 
@@ -78,7 +78,7 @@ primeFactors x
     primeFactors' :: Int -> [ Int ] -> [ Int ]
     primeFactors' x' all@(y:candidates)
       | x' == 1         = []
-      | x' % y == 0 = y : primeFactors' (x' // y) all
+      | x' % y == 0     = y : primeFactors' (x' // y) all
       | otherwise       = primeFactors' x' candidates
 
 
