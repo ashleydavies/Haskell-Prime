@@ -12,7 +12,6 @@ x // y = x `div` y
 (%%) :: (Integral a) => a -> a -> a
 x %% y = x `mod` y
 
-
 -- Precondition on all integers: they're all non-negative.
 
 isPrime :: Int -> Bool
@@ -28,7 +27,7 @@ isPrime x
       | x %% y == 0  = False
       | otherwise       = isPrime' (y + 2)
       where
-		    maxNum = ceiling(sqrt(fromIntegral(x)))
+        maxNum = ceiling(sqrt(fromIntegral(x)))
 
 
 nextPrime :: Int -> Int
@@ -53,8 +52,8 @@ modPow :: (Integral a) => a -> a -> a -> a
 --   For odd  y, x^y mod n = (x mod n)(x^(y-1) mod n) mod n
 modPow x y n
   | y <= 1  = (x^y) %% n
+  | even y  = ((modPow x (y // 2) n) ^ 2) %% n
   | odd y   = ((x %% n) * (modPow x (y - 1) n)) %% n
-  | even y  = (((modPow x (y // 2) n) %% n) ^ 2) %% n
 
 
 isCarmichael :: Int -> Bool
@@ -126,11 +125,9 @@ nextSmithNumber x
 ---------------------
 --  RSA Utilities  --
 ---------------------
+-- Implemented in ~6 hours - nb not remotely cryptographically secure
 -- It seems the euler totient takes far too long to calculate (and often
---   overflows) for certain numbers much larger, though many work acceptably.
--- Apologies for the few hacky functions; I didn't have enough time to
---   consider all of the mathematics behind them in time and had to rush
---   implement most of them before 12pm
+--   overflows) for certain larger numbers, though many work acceptably.
 
 greatestCD :: Int -> Int -> Int
 -- Calculates the greatest common denominator of two integers
@@ -168,8 +165,9 @@ uniqueIfy :: [Int] -> [Int]
 -- Takes a SORTED list of integers and "uniqueifies" it (removes duplicates)
 uniqueIfy [] = []
 uniqueIfy (x1:x2:xs)
-  | x1 == x2  = uniqueIfy (x2:xs)
-  | otherwise = x1 : (uniqueIfy (x2:xs))
+  | x1 == x2  = rest
+  | otherwise = x1 : rest
+  where rest = uniqueIfy (x2:xs)
 uniqueIfy all@(x1:[]) = all
 
 
@@ -177,23 +175,20 @@ eulTotient :: Int -> Int
 eulTotient 1 = 1
 -- Pre: x > 0
 -- Implementation of Euler's totient function (returns # coprimes to x (<x))
-
 -- Strangely seems to break down on large (huge) numbers. Possibly due to Ratio
---   precision. Also tried float and double; same issues.
+-- Similar issues arise with float and double.
 eulTotient x
   = numerator totient // denominator totient
   where
-    totient = (x % 1) * eulTotient' ( uniqueIfy ( primeFactors x ))
+    totient = (x % 1) * eulTotient' ( uniqueIfy (primeFactors x))
     eulTotient' :: [Int] -> Ratio Int
     eulTotient' [] = 1 % 1
     eulTotient' (f:fs)
-      = ( 1 % 1 - 1 % f) * eulTotient' fs
+      = (1 % 1 - 1 % f) * eulTotient' fs
 
 
 generatePrimePair :: (Int, Int)
--- Generate a random key pair. Used a hacky unsafe IO operation
---   because I couldn't figure out how to get it structured properly
---   to avoid doing so.
+-- Generate a random key pair. Uses a hacky unsafe IO operation.
 -- Returns the same numbers each session.
 generatePrimePair = (prime1, prime2)
   where
@@ -202,7 +197,7 @@ generatePrimePair = (prime1, prime2)
 
 
 getRandomPrimeCandidate :: IO Int
--- Super hacky way to get some random numbers that nextPrime will like =D
+-- Get some rudimentary random numbers that nextPrime will like
 -- Bigger numbers works (Calculations begin to halt at ~1 million,
 --   but take a very long time. This is just for examplar and testing use,
 --   so a small number is fine.
@@ -271,7 +266,7 @@ cipherCharacters
 
 basicCipherChar :: Char -> Int
 -- Ciphers a character using the basic cipher above
--- Pre: c is contained in the cipher and isn't 
+-- Pre: c is contained in the cipher
 basicCipherChar c
   = (fromMaybe 0 (elemIndex c cipherCharacters)) + 10
 
@@ -336,9 +331,9 @@ mergeNumbers x
   = mergeNumbers' x 0
   where
     mergeNumbers' :: [Integer] -> Integer -> Integer
-    mergeNumbers' []     pro = pro
-    mergeNumbers' (x:xs) pro
-      = mergeNumbers' xs (pro * (10 ^ magn ) + x)
-        where magn = floor ( logBase 10 (fromIntegral(x) ) ) + 1
+    mergeNumbers' []     processed = processed
+    mergeNumbers' (x:xs) processed
+      = mergeNumbers' xs (processed * (10 ^ magn ) + x)
+        where magn = floor ( logBase 10 $ fromIntegral x ) + 1
 
 
